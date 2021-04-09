@@ -1,7 +1,10 @@
-﻿using course.api.Filters;
+﻿using course.api.Business.Entities;
+using course.api.Filters;
+using course.api.Infrastructure.Data;
 using course.api.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Swashbuckle.AspNetCore.Annotations;
 using System;
@@ -65,10 +68,17 @@ namespace course.api.Controllers
         [ValidacaoModelStateCustom]
         public IActionResult Register(RegisterViewModelInput registerViewModelInput)
         {
-            //if (!ModelState.IsValid)
-            //{
-            //    return BadRequest(new ValidaCampoViewModelOutput(ModelState.SelectMany(sm => sm.Value.Errors).Select(s => s.ErrorMessage)));
-            //}
+            var optionsBuilder = new DbContextOptionsBuilder<CourseDbContext>();
+            optionsBuilder.UseSqlServer("Server=DESKTOP-PB75M6I;Database=CourseDb;User=sa;Password=hakunamatata");
+
+            CourseDbContext context = new CourseDbContext(optionsBuilder.Options);
+
+            var user = new User();
+            user.Login = registerViewModelInput.Login;
+            user.Password = registerViewModelInput.Password;
+            user.Email = registerViewModelInput.Email;
+
+            context.Users.Add(user);
 
             return Created("", registerViewModelInput);
         }
