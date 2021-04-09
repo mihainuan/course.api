@@ -60,6 +60,11 @@ namespace course.api.Controllers
             });
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="registerViewModelInput"></param>
+        /// <returns></returns>
         [SwaggerResponse(statusCode: 200, description: "SUCESSO no Registro!", Type = typeof(LoginViewModelInput))]
         [SwaggerResponse(statusCode: 400, description: "Campos OBRIGATÓRIOS!", Type = typeof(ValidaCampoViewModel))]
         [SwaggerResponse(statusCode: 500, description: "ERRO no Registro!", Type = typeof(ValidaCampoViewModel))]
@@ -69,9 +74,15 @@ namespace course.api.Controllers
         public IActionResult Register(RegisterViewModelInput registerViewModelInput)
         {
             var optionsBuilder = new DbContextOptionsBuilder<CourseDbContext>();
-            optionsBuilder.UseSqlServer("Server=DESKTOP-PB75M6I;Database=CourseDb;User=sa;Password=hakunamatata");
-
+            optionsBuilder.UseSqlServer("Server=localhost;Database=CourseDb;User=sa;Password=hakunamatata");
             CourseDbContext context = new CourseDbContext(optionsBuilder.Options);
+
+            var pendingMigrations = context.Database.GetPendingMigrations();
+
+            if(pendingMigrations.Count() > 0)
+            {
+                context.Database.Migrate();
+            }
 
             var user = new User();
             user.Login = registerViewModelInput.Login;
@@ -79,8 +90,9 @@ namespace course.api.Controllers
             user.Email = registerViewModelInput.Email;
 
             context.Users.Add(user);
+            context.SaveChanges();
 
-            return Created("", registerViewModelInput);
+            return Created("SUCCESS!!", registerViewModelInput);
         }
     }
 }

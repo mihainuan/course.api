@@ -4,5 +4,12 @@
         <name>course.api</name>
     </assembly>
     <members>
+        <member name="M:course.api.Controllers.UserController.Register(course.api.Models.RegisterViewModelInput)">
+            <summary>
+            
+            </summary>
+            <param name="registerViewModelInput"></param>
+            <returns></returns>
+        </member>
     </members>
 </doc>
