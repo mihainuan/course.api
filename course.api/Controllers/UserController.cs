@@ -1,19 +1,16 @@
 ﻿using course.api.Business.Entities;
+using course.api.Configuratioins;
 using course.api.Filters;
-using course.api.Infrastructure.Data;
 using course.api.Models;
-using Microsoft.AspNetCore.Http;
+using course.api.Repositories;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Swashbuckle.AspNetCore.Annotations;
 using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace course.api.Controllers
 {
@@ -21,6 +18,21 @@ namespace course.api.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
+        private readonly IUserRepository _userRepository;
+        private readonly IAuthenticationService _authenticationService;
+
+        public UserController(IUserRepository userRepository,
+            IAuthenticationService authenticationService)
+        {
+            _userRepository = userRepository;
+            _authenticationService = authenticationService;
+        }
+
+        /// <summary>
+        /// Método API para log-in de USUÁRIOS
+        /// </summary>
+        /// <param name="loginViewModelInput"></param>
+        /// <returns></returns>
         [SwaggerResponse(statusCode: 200, description: "SUCESSO na Autenticação!", Type = typeof(LoginViewModelInput))]
         [SwaggerResponse(statusCode: 400, description: "Campos OBRIGATÓRIOS!", Type = typeof(ValidaCampoViewModel))]
         [SwaggerResponse(statusCode: 500, description: "ERRO na Autenticação!", Type = typeof(ValidaCampoViewModel))]
@@ -29,29 +41,20 @@ namespace course.api.Controllers
         [ValidacaoModelStateCustom]
         public IActionResult Logmein(LoginViewModelInput loginViewModelInput)
         {
+            var user = _userRepository.ObterUsuario(loginViewModelInput.Login);
+
+            if (user == null)
+            {
+                return BadRequest("Houve um Erro ao Tentar Acessar.");
+            }
             var userViewModelOutput = new UserViewModelOutput()
             {
-                CodeID = 1,
-                Login = "mihainuan",
-                Email = "mihainuan@gmail.com"
+                CodeID = user.UserId,
+                Login = loginViewModelInput.Login,
+                Email = user.Email
             };
 
-            var secret = Encoding.ASCII.GetBytes("MNaAlpB%&<!P@LOO$@!>777*H3lp?#");
-            var symmetricSecurityKey = new SymmetricSecurityKey(secret);
-            var securityTokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new System.Security.Claims.ClaimsIdentity(new Claim[]
-                {
-                    new Claim(ClaimTypes.NameIdentifier, userViewModelOutput.CodeID.ToString()),
-                    new Claim(ClaimTypes.Name, userViewModelOutput.Login.ToString()),
-                    new Claim(ClaimTypes.Email, userViewModelOutput.Email.ToString()),
-                }),
-                Expires = DateTime.UtcNow.AddDays(1),
-                SigningCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256Signature)
-            };
-            var jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
-            var tokenGenerated = jwtSecurityTokenHandler.CreateToken(securityTokenDescriptor);
-            var token = jwtSecurityTokenHandler.WriteToken(tokenGenerated);
+            var token = _authenticationService.GenerateToken(userViewModelOutput);
 
             return Ok(new
             {
@@ -61,7 +64,7 @@ namespace course.api.Controllers
         }
 
         /// <summary>
-        /// 
+        /// Método API para registro de USUÁRIOS
         /// </summary>
         /// <param name="registerViewModelInput"></param>
         /// <returns></returns>
@@ -73,24 +76,14 @@ namespace course.api.Controllers
         [ValidacaoModelStateCustom]
         public IActionResult Register(RegisterViewModelInput registerViewModelInput)
         {
-            var optionsBuilder = new DbContextOptionsBuilder<CourseDbContext>();
-            optionsBuilder.UseSqlServer("Server=localhost;Database=CourseDb;User=sa;Password=hakunamatata");
-            CourseDbContext context = new CourseDbContext(optionsBuilder.Options);
-
-            var pendingMigrations = context.Database.GetPendingMigrations();
-
-            if(pendingMigrations.Count() > 0)
-            {
-                context.Database.Migrate();
-            }
-
             var user = new User();
             user.Login = registerViewModelInput.Login;
             user.Password = registerViewModelInput.Password;
             user.Email = registerViewModelInput.Email;
 
-            context.Users.Add(user);
-            context.SaveChanges();
+
+            _userRepository.Add(user);
+            _userRepository.Commit();
 
             return Created("SUCCESS!!", registerViewModelInput);
         }

@@ -4,9 +4,29 @@
         <name>course.api</name>
     </assembly>
     <members>
+        <member name="M:course.api.Controllers.CourseController.Post(course.api.Models.Courses.CourseViewModelInput)">
+            <summary>
+            Método API para criar CURSOS
+            </summary>
+            <param name="courseViewModelInput"></param>
+            <returns></returns>
+        </member>
+        <member name="M:course.api.Controllers.CourseController.Get">
+            <summary>
+            Método API para listar CURSOS
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:course.api.Controllers.UserController.Logmein(course.api.Models.LoginViewModelInput)">
+            <summary>
+            Método API para log-in de USUÁRIOS
+            </summary>
+            <param name="loginViewModelInput"></param>
+            <returns></returns>
+        </member>
         <member name="M:course.api.Controllers.UserController.Register(course.api.Models.RegisterViewModelInput)">
             <summary>
-            
+            Método API para registro de USUÁRIOS
             </summary>
             <param name="registerViewModelInput"></param>
             <returns></returns>
